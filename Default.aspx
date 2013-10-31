@@ -14,4 +14,9 @@
         You can also find <a href="http://go.microsoft.com/fwlink/?LinkID=152368&amp;clcid=0x409"
             title="MSDN ASP.NET Docs">documentation on ASP.NET at MSDN</a>.
     </p>
+    <p>
+    <asp:TextBox ID="txtimgcode" runat="server"></asp:TextBox>
+    <br />
+    <asp:Image ID="Image1" runat="server" ImageUrl="~/CImage.aspx"/>
+    </p>
 </asp:Content>
