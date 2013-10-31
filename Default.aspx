@@ -18,5 +18,5 @@
     <asp:TextBox ID="txtimgcode" runat="server"></asp:TextBox>
     <br />
     <asp:Image ID="Image1" runat="server" ImageUrl="~/CImage.aspx"/>
-    </p>
+        a</p>
 </asp:Content>
