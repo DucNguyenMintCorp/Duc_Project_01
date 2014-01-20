@@ -45,3 +45,72 @@ ELSE
 	 ON VLT.VSPLensId=EPA.ComponentId 
 	WHERE (([Vision] LIKE '%' + @Vision + '%') AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') AND VLT.LensCategory = 0
 END
+
+
+BEGIN
+	DECLARE @Enable bit  = 1
+	DECLARE @CurrentParent int = 0
+	DECLARE @Parent int = 0
+	DECLARE @SuperParent int = 0
+
+	DECLARE @lensDataFromParent bit = 1
+			
+	SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @OrganizationId
+	IF @lensDataFromParent = 1
+		SELECT @CurrentParent = ISNULL(parent_organization_id, -1) FROM organization where id = @OrganizationId
+	ELSE
+		SET @CurrentParent = -1
+
+	IF @CurrentParent <> -1
+	BEGIN
+		SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @CurrentParent
+		IF @lensDataFromParent = 1
+			SELECT @Parent = ISNULL(parent_organization_id, -1) FROM organization where id = @CurrentParent
+		ELSE
+			SET @CurrentParent = -1
+		
+
+		IF @Parent <> -1
+		BEGIN
+			SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @Parent
+			IF @lensDataFromParent = 1
+				SELECT @SuperParent = ISNULL(parent_organization_id, 0) FROM organization where id = @Parent
+			ELSE
+				SET @CurrentParent = -1
+		END
+		ELSE
+			SET @Parent = 0
+	END
+	ELSE
+		SET @CurrentParent = 0
+
+IF @Vision = 'Others'
+BEGIN
+	SELECT VLT.*, ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, 0)))) AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
+	FROM [VSPLenses] AS VLT
+	LEFT OUTER JOIN 
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA ON VLT.VSPLensId=EPA.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @CurrentParent AND IsDisabled = 0) AS EPA1 ON VLT.VSPLensId=EPA1.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @Parent AND IsDisabled = 0) AS EPA2 ON VLT.VSPLensId=EPA2.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @SuperParent AND IsDisabled = 0) AS EPA3 ON VLT.VSPLensId=EPA3.ComponentId 
+	WHERE ((([Vision] LIKE '%Double%') OR ([Vision] LIKE '%Quad%') OR ([Vision] LIKE '%Progressive%')) 
+			AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') 
+	ORDER BY [Vision]
+
+END
+ELSE
+	SELECT VLT.*, ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, 0)))) AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
+	FROM [VSPLenses] AS VLT
+	LEFT OUTER JOIN 
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA ON VLT.VSPLensId=EPA.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @CurrentParent AND IsDisabled = 0) AS EPA1 ON VLT.VSPLensId=EPA1.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @Parent AND IsDisabled = 0) AS EPA2 ON VLT.VSPLensId=EPA2.ComponentId 
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @SuperParent AND IsDisabled = 0) AS EPA3 ON VLT.VSPLensId=EPA3.ComponentId 
+	WHERE (([Vision] LIKE '%' + @Vision + '%') AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%')
+END
