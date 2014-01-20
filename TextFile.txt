@@ -1,12 +1,10 @@
 ﻿BEGIN
-	DECLARE @Enable bit
-	SET @Enable = 1
-	
-	SELECT PCN.ProcedureCodeId, PCN.CPTCode, PCN.Description, PCN.Category , ISNULL(EPA.Price, '0') AS 'Fees'
-	, CAST(CASE WHEN EPA.Price IS NULL THEN 0 ELSE 1 END AS bit) AS 'Enable' 
-	FROM [ProcedureCodeNew] AS PCN
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @OrganizationId) AS EPA
-	 ON PCN.ProcedureCodeId=EPA.ComponentId
-	 --WHERE PCN.IsActive = 1
+	SELECT [ProductId]
+		  ,[Name]
+		  ,[SortId]
+		  ,[Page]
+		  ,[IsEnabled]
+	  FROM [dbo].[Product]
+	  WHERE 1 = CASE WHEN @ProductId =0 THEN 1 ELSE CASE WHEN ProductId =@ProductId THEN 1 ELSE 0 END END
+	  ORDER BY SortId DESC
 END
