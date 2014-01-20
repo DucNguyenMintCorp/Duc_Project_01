@@ -21,7 +21,14 @@
 				SELECT @ParentOrganizationId = ISNULL(parent_organization_id, -1) FROM organization WHERE id = @ParentOrganizationId
 			ELSE
 				BREAK
+		
+			IF @ParentOrganizationId = @OrganizationId
+			BEGIN
+				SET @ParentOrganizationId = -1
+			END
+			
 		END
+		
 	END
 
 	IF @BaseFee <> 0
@@ -47,7 +54,10 @@
 	ELSE
 
 	
-	SELECT VLO.*, CASE WHEN VLO.AddonLensCode IS NULL THEN VLO.BaseLensCode ELSE VLO.AddonLensCode END AS 'SingleLensCode', ISNULL(EPA.Price, '0') AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable'
+	SELECT VLO.*, CASE WHEN VLO.RedirectLensCode IS NULL THEN (CASE WHEN VLO.AddonLensCode IS NULL THEN VLO.BaseLensCode ELSE VLO.AddonLensCode END) ELSE VLO.LensCode END AS 'SingleLensCode'
+	, CASE WHEN VLO.RedirectLensCode IS NULL THEN ISNULL(EPA.Price, 0) 
+		ELSE (SELECT Price FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId AND IsDisabled = 0 AND ComponentId = (SELECT VSPLensOptionId FROM VSPLensOptions WHERE LensCode = VLO.RedirectLensCode AND ([VisionType] LIKE '%' + @VisionType + '%') AND ([IsDeleted] != 1 ) )) END  AS 'Usual & Customary fee'
+	, CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable'
 	, CASE WHEN EPA.Price IS NULL THEN 0 ELSE EPA.Price - @BaseFee END AS 'Add-On Fees'
 	FROM [VSPLensOptions] AS VLO
 	LEFT OUTER JOIN 
