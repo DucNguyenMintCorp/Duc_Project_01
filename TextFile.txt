@@ -1,5 +1,5 @@
 ﻿BEGIN  
- SELECT FD.State As 'Region/State', SUM(FD.OttoBoxPrice) As 'Sum of All Sales', SUM(FD.OttoBoxTotalPrice) As 'Sum of All Payments Received'
+ SELECT FD.State As 'Region/State', SUM(FD.OttoBoxPrice) As 'Sum of All Sales', SUM(FD.OttoBoxTotalPrice) As 'Sum of All Payment Received'
  , '' AS 'Sum of All Cancelled Annual Subscriptions', '' AS 'Total Payments Received Less Cancellations' 
  FROM (SELECT AI.State, OB.OttoBoxPrice, OB.OttoBoxTotalPrice
  FROM OttoBoxOrderDetails AS OB
