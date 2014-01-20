@@ -1,5 +1,5 @@
 ﻿BEGIN
-	SELECT M.*, '<table class="classForDescription"><tr><td>' + M.[Message] + '</td></tr></table>' AS 'ShortMessage', MS.MessageStatusName, MT.MessageType 
+	SELECT M.*, SUBSTRING(M.[Message], 0, 101) AS 'ShortMessage', MS.MessageStatusName, MT.MessageType 
 	FROM dbo.[Messages] AS M
 	Left outer JOIN MessageStatus AS MS ON M.MessageStatusId = MS.MessageStatusId
 	Left Outer JOIN MessageType AS MT ON M.MessageTypeId = MT.MessageTypeId
