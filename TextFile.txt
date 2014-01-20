@@ -1,3 +1,8 @@
-﻿UPDATE dbo.[Users] SET Password=HASHBYTES('MD5', @Password) WHERE Username=@Username 
+﻿UPDATE dbo.[Users] SET Password=HASHBYTES('MD5', @Password) WHERE Username=@Username
+
+IF (SELECT UserLoginId FROM UserLogin WHERE Username = @Username) IS NULL 
+	INSERT INTO UserLogin (Username) VALUES(@Username)
+ELSE
+	UPDATE UserLogin SET FailLoginNumber = 0 WHERE Username = @Username
 
 SELECT 1
