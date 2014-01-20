@@ -17,3 +17,35 @@ ORDER BY O.EFAN
 
 SELECT * FROM EyefinityLog
 	RETURN
+
+BEGIN
+
+
+	DECLARE @Enable bit
+	SET @Enable = 1
+	DECLARE @Disable bit
+	SET @Disable = 0
+
+
+IF @Vision = 'Others'
+BEGIN
+	SELECT *, ISNULL(EPA.Price, '0') AS 'Usual & Customary fee'
+	, CASE WHEN EPA.Price IS NULL THEN @Disable ELSE CASE WHEN EPA.IsDisabled = 0 THEN @Enable ELSE @Disable END END AS 'Enable' 
+	FROM [VSPLenses] AS VLT
+	LEFT OUTER JOIN 
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA
+	 ON VLT.VSPLensId=EPA.ComponentId 
+	WHERE ((([Vision] LIKE '%Double%') OR ([Vision] LIKE '%Quad%') OR ([Vision] LIKE '%Progressive%')) 
+			AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') AND VLT.LensCategory = 0
+	ORDER BY [Vision]
+
+END
+ELSE
+	SELECT *, ISNULL(EPA.Price, '0') AS 'Usual & Customary fee'
+	, CASE WHEN EPA.Price IS NULL THEN @Disable ELSE CASE WHEN EPA.IsDisabled = 0 THEN @Enable ELSE @Disable END END AS 'Enable'
+	FROM [VSPLenses] AS VLT
+	LEFT OUTER JOIN 
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA
+	 ON VLT.VSPLensId=EPA.ComponentId 
+	WHERE (([Vision] LIKE '%' + @Vision + '%') AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') AND VLT.LensCategory = 0
+END
