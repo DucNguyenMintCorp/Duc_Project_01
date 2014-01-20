@@ -1,58 +1,34 @@
 ﻿BEGIN
-	DECLARE @Enable bit = 1
-	DECLARE @BaseFee decimal(18, 2) = 0
-	DECLARE @ParentOrganizationId int = 0
+	DECLARE @Enable bit  = 1
+	DECLARE @CurrentParent int = 0
+	DECLARE @Parent int = 0
+	DECLARE @SuperParent int = 0
 
-	SET @ParentOrganizationId = @OrganizationId
+	SELECT @CurrentParent = ISNULL(parent_organization_id, -1) FROM organization where id = @OrganizationId
 
-	WHILE @BaseFee = 0 AND @ParentOrganizationId <> -1
+	IF @CurrentParent <> -1
 	BEGIN
-		IF @VisionType LIKE 'Single%'
-			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 774 AND ComponentTypeId = 12
-		ELSE
-			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 976 AND ComponentTypeId = 12
+		SELECT @Parent = ISNULL(parent_organization_id, -1) FROM organization where id = @CurrentParent
 
-		IF @BaseFee = 0
+		IF @Parent <> -1
 		BEGIN
-			DECLARE @lensDataFromParent bit = 1
-			SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @ParentOrganizationId
-
-			IF @lensDataFromParent = 1
-				SELECT @ParentOrganizationId = ISNULL(parent_organization_id, -1) FROM organization WHERE id = @ParentOrganizationId
-			ELSE
-				BREAK
+			SELECT @SuperParent = ISNULL(parent_organization_id, 0) FROM organization where id = @Parent
 		END
-	END
-
-	IF @BaseFee <> 0
-		SET @OrganizationId = @ParentOrganizationId
-		
-
-	IF @OptionType = 'Progressives'
-	BEGIN
-
-	SELECT VLO.*, CASE WHEN VLO.AddonLensCode IS NULL THEN VLO.BaseLensCode ELSE VLO.AddonLensCode END AS 'SingleLensCode', ISNULL(EPA.Price, '0') AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable'
-	, CASE WHEN EPA.Price IS NULL THEN 0 
-		ELSE EPA.Price - (CASE WHEN VLO.LensCode LIKE '%+%' THEN 
-										(SELECT TOP 1 ISNULL(EPATemp.Price, @BaseFee) FROM ElementPriceAssociation AS EPATemp 
-										WHERE (EPATemp.ComponentId =(SELECT VLOTemp.VSPLensOptionId FROM VSPLensOptions AS VLOTemp 
-																		WHERE (VLOTemp.OptionType = 'Progressives') AND (VLOTemp.LensCode = SUBSTRING(VLO.LensCode, 1, 2)))) AND (EPATemp.ComponentTypeId = 15) AND EPATemp.OrganizationId = @OrganizationId) ELSE @BaseFee END) END AS 'Add-On Fees'
-	FROM [VSPLensOptions] AS VLO
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId) AS EPA
-	 ON VLO.VSPLensOptionId=EPA.ComponentId 
-	WHERE (([VisionType] LIKE '%' + @VisionType + '%')  AND ([OptionType] LIKE @OptionType + '%') AND ([IsDeleted] != 1 ))
-
+		ELSE
+			SET @Parent = 0
 	END
 	ELSE
-
+		SET @CurrentParent = 0
 	
-	SELECT VLO.*, CASE WHEN VLO.AddonLensCode IS NULL THEN VLO.BaseLensCode ELSE VLO.AddonLensCode END AS 'SingleLensCode', ISNULL(EPA.Price, '0') AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable'
-	, CASE WHEN EPA.Price IS NULL THEN 0 ELSE EPA.Price - @BaseFee END AS 'Add-On Fees'
-	FROM [VSPLensOptions] AS VLO
+	SELECT PCN.ProcedureCodeId, PCN.CPTCode, PCN.Description, PCN.Category , ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, '0')))) AS 'Fees'
+	, CAST(CASE WHEN EPA.Price IS NULL THEN 0 ELSE 1 END AS bit) AS 'Enable' 
+	FROM [ProcedureCodeNew] AS PCN
 	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId) AS EPA
-	 ON VLO.VSPLensOptionId=EPA.ComponentId 
-	WHERE (([VisionType] LIKE '%' + @VisionType + '%')  AND ([OptionType] LIKE @OptionType + '%') AND ([IsDeleted] != 1 ))
-
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA ON PCN.ProcedureCodeId=EPA.ComponentId
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @CurrentParent AND IsDisabled = 0) AS EPA1 ON PCN.ProcedureCodeId=EPA1.ComponentId
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @Parent AND IsDisabled = 0) AS EPA2 ON PCN.ProcedureCodeId=EPA2.ComponentId
+	LEFT OUTER JOIN
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @SuperParent AND IsDisabled = 0) AS EPA3 ON PCN.ProcedureCodeId=EPA3.ComponentId
 END
