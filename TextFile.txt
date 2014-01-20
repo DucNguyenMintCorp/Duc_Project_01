@@ -1,5 +1,5 @@
 ﻿BEGIN
-	UPDATE [MemberInfo] SET
+	UPDATE [dev.smarteyewear.net].[dbo].[MemberInfo] SET
 			   [Memberfirstname]=@Memberfirstname
 			   ,[MemberlastName]=@MemberlastName
 			   ,[DOB]=@DOB
