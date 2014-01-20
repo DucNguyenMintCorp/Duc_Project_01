@@ -1,6 +1,6 @@
 ﻿BEGIN  
  SELECT U.FirstName AS'First Name', U.LastName AS'Last Name', O.Name AS'Practice Name', O.PhoneNumber AS 'Practice Phone', AI.AddressLine1 AS 'Street Address', AI.City AS 'City'
-	, AI.State, AI.ZipCode AS 'Zip Code',  OOD.OttoBoxQuantity AS 'otto Boxes Ordered'
+	, AI.State, AI.ZipCode AS 'Postal Code',  OOD.OttoBoxQuantity AS 'otto Boxes Ordered'
  FROM Users AS U WITH(NOLOCK)
  LEFT JOIN Office AS O ON O.OfficeId = U.OfficeId
  LEFT JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
