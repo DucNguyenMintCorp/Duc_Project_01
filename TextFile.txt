@@ -1,11 +1,9 @@
 ﻿BEGIN
 	DECLARE @Enable bit
 	SET @Enable = 1
-	DECLARE @Disable bit
-	SET @Disable = 0
 	
 	SELECT PCN.ProcedureCodeId, PCN.CPTCode, PCN.Description, PCN.Category , ISNULL(EPA.Price, '0') AS 'Fees'
-	, CASE WHEN EPA.Price IS NULL THEN @Disable ELSE CASE WHEN EPA.IsDisabled = 0 THEN @Enable ELSE @Disable END END AS 'Enable'
+	, CAST(CASE WHEN EPA.Price IS NULL THEN 0 ELSE 1 END AS bit) AS 'Enable' 
 	FROM [ProcedureCodeNew] AS PCN
 	LEFT OUTER JOIN 
 	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @OrganizationId) AS EPA
