@@ -1,116 +1,12 @@
 ﻿BEGIN  
- SELECT O.EFAN AS'EFAN',  O.Name AS'Account Name', AI.AddressLine1 AS 'Account Address', AI.City AS 'Account City', AI.State AS 'Account State', AI.ZipCode AS 'Account Zip', AC.Type,
- CASE WHEN AC.Type = 1 THEN COALESCE(COUNT(AC.Fee), 0) ELSE 0 END  AS 'Number of Authorizations Submitted' , CASE WHEN AC.Type = 1 THEN COALESCE(SUM(AC.Fee), 0) ELSE 0 END AS 'Authorization Fess Paid',
- CASE WHEN AC.Type = 2 THEN COALESCE(COUNT(AC.Fee), 0) ELSE 0 END  AS 'Number of Claim Submitted' , CASE WHEN AC.Type = 2 THEN COALESCE(SUM(AC.Fee), 0) ELSE 0 END AS 'Claim Fess Paid'
-FROM Office AS O
-INNER JOIN 
- (
- SELECT EFAN, Fee, 1 AS 'Type', TransactionDate FROM AuthorizationTransaction 
- UNION ALL
- SELECT EFAN, Fee, 2 AS 'Type', TransactionDate FROM ClaimTransaction
- ) AS AC ON AC.EFAN = O.EFAN
-LEFT JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
-WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN (AC.TransactionDate
- 	BETWEEN @fromdate AND @todate) THEN 1 ELSE 0 END END
-GROUP BY O.EFAN, O.Name, AI.AddressLine1, AI.City, AI.State, AI.ZipCode, AC.Type 
-ORDER BY O.EFAN
-
-SELECT * FROM EyefinityLog
-	RETURN
-
-BEGIN
-
-
-	DECLARE @Enable bit
-	SET @Enable = 1
-
-
-IF @Vision = 'Others'
-BEGIN
-	SELECT *, ISNULL(EPA.Price, '0') AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
-	FROM [VSPLenses] AS VLT
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA
-	 ON VLT.VSPLensId=EPA.ComponentId 
-	WHERE ((([Vision] LIKE '%Double%') OR ([Vision] LIKE '%Quad%') OR ([Vision] LIKE '%Progressive%')) 
-			AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') AND VLT.LensCategory = 0
-	ORDER BY [Vision]
-
-END
-ELSE
-	SELECT *, ISNULL(EPA.Price, '0') AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
-	FROM [VSPLenses] AS VLT
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA
-	 ON VLT.VSPLensId=EPA.ComponentId 
-	WHERE (([Vision] LIKE '%' + @Vision + '%') AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') AND VLT.LensCategory = 0
-END
-
-
-BEGIN
-	DECLARE @Enable bit  = 1
-	DECLARE @CurrentParent int = 0
-	DECLARE @Parent int = 0
-	DECLARE @SuperParent int = 0
-
-	DECLARE @lensDataFromParent bit = 1
-			
-	SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @OrganizationId
-	IF @lensDataFromParent = 1
-		SELECT @CurrentParent = ISNULL(parent_organization_id, -1) FROM organization where id = @OrganizationId
-	ELSE
-		SET @CurrentParent = -1
-
-	IF @CurrentParent <> -1
-	BEGIN
-		SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @CurrentParent
-		IF @lensDataFromParent = 1
-			SELECT @Parent = ISNULL(parent_organization_id, -1) FROM organization where id = @CurrentParent
-		ELSE
-			SET @CurrentParent = -1
-		
-
-		IF @Parent <> -1
-		BEGIN
-			SELECT @lensDataFromParent = lensDataFromParent FROM organization WHERE id = @Parent
-			IF @lensDataFromParent = 1
-				SELECT @SuperParent = ISNULL(parent_organization_id, 0) FROM organization where id = @Parent
-			ELSE
-				SET @CurrentParent = -1
-		END
-		ELSE
-			SET @Parent = 0
-	END
-	ELSE
-		SET @CurrentParent = 0
-
-IF @Vision = 'Others'
-BEGIN
-	SELECT VLT.*, ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, 0)))) AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
-	FROM [VSPLenses] AS VLT
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA ON VLT.VSPLensId=EPA.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @CurrentParent) AS EPA1 ON VLT.VSPLensId=EPA1.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @Parent) AS EPA2 ON VLT.VSPLensId=EPA2.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @SuperParent) AS EPA3 ON VLT.VSPLensId=EPA3.ComponentId 
-	WHERE ((([Vision] LIKE '%Double%') OR ([Vision] LIKE '%Quad%') OR ([Vision] LIKE '%Progressive%')) 
-			AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%') 
-	ORDER BY [Vision]
-
-END
-ELSE
-	SELECT VLT.*, ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, 0)))) AS 'Usual & Customary fee', CASE WHEN EPA.Price IS NULL THEN @Enable ELSE @Enable END AS 'Enable' 
-	FROM [VSPLenses] AS VLT
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @OrganizationId) AS EPA ON VLT.VSPLensId=EPA.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @CurrentParent) AS EPA1 ON VLT.VSPLensId=EPA1.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @Parent) AS EPA2 ON VLT.VSPLensId=EPA2.ComponentId 
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=12 AND OrganizationId = @SuperParent) AS EPA3 ON VLT.VSPLensId=EPA3.ComponentId 
-	WHERE (([Vision] LIKE '%' + @Vision + '%') AND ([Options] IS NULL ) AND [Description] NOT LIKE '%Other%')
+ SELECT FD.State As 'Region/State', SUM(FD.OttoBoxPrice) As 'Sum of All Sales', SUM(FD.OttoBoxTotalPrice) As 'Sum of All Payments Received'
+ , '' AS 'Sum of All Cancelled Annual Subscriptions', '' AS 'Total Payments Received Less Cancellations' 
+ FROM (SELECT AI.State, OB.OttoBoxPrice, OB.OttoBoxTotalPrice
+ FROM OttoBoxOrderDetails AS OB
+ INNER JOIN Office AS O ON O.OfficeId = OB.OfficeId
+ INNER JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
+ WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN OB.OttoOrderCreationDate
+	between @fromdate and @todate THEN 1 ELSE 0 END END) AS FD
+GROUP BY FD.State
+ORDER BY FD.State
 END
