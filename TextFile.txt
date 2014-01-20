@@ -1,11 +1,14 @@
-﻿BEGIN  
- SELECT U.FirstName AS'First Name', U.LastName AS'Last Name', O.Name AS'Practice Name', O.PhoneNumber AS 'Practice Phone', AI.AddressLine1 AS 'Street Address', AI.City AS 'City'
-	, AI.State, AI.ZipCode AS 'Postal Code',  OOD.OttoBoxQuantity AS 'otto Boxes Ordered'
- FROM Users AS U WITH(NOLOCK)
- LEFT JOIN Office AS O ON O.OfficeId = U.OfficeId
- LEFT JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
- LEFT JOIN OttoBoxOrderDetails AS OOD ON OOD.OfficeId = O.OfficeId
- WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN OOD.OttoOrderCreationDate
-	between @fromdate and @todate THEN 1 ELSE 0 END END
-	ORDER BY U.DateCreated ASC
+﻿BEGIN
+	DECLARE @Enable bit
+	SET @Enable = 1
+	DECLARE @Disable bit
+	SET @Disable = 0
+	
+	SELECT PCN.ProcedureCodeId, PCN.CPTCode, PCN.Description, PCN.Category , ISNULL(EPA.Price, '0') AS 'Fees'
+	, CASE WHEN EPA.Price IS NULL THEN @Disable ELSE CASE WHEN EPA.IsDisabled = 0 THEN @Enable ELSE @Disable END END AS 'Enable'
+	FROM [ProcedureCodeNew] AS PCN
+	LEFT OUTER JOIN 
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @OrganizationId) AS EPA
+	 ON PCN.ProcedureCodeId=EPA.ComponentId
+	 --WHERE PCN.IsActive = 1
 END
