@@ -1,8 +1,11 @@
-﻿BEGIN
-	SELECT M.*, SUBSTRING(M.[Message], 0, 101) AS 'ShortMessage', MS.MessageStatusName, MT.MessageType 
-	FROM dbo.[Messages] AS M
-	Left outer JOIN MessageStatus AS MS ON M.MessageStatusId = MS.MessageStatusId
-	Left Outer JOIN MessageType AS MT ON M.MessageTypeId = MT.MessageTypeId
-	WHERE 1 = CASE WHEN @MessageId = 0 THEN 1 ELSE CASE WHEN M.MessageId = @MessageId THEN 1 ELSE 0 END END
-	AND M.IsDeleted = 0
+﻿BEGIN  
+ SELECT U.FirstName AS'First Name', U.LastName AS'Last Name', O.Name AS'Practice Name', O.PhoneNumber AS 'Practice Phone', AI.AddressLine1 AS 'Street Address', AI.City AS 'City'
+	, AI.State, AI.ZipCode AS 'Zip Code',  OOD.OttoBoxQuantity AS 'otto Boxes Ordered'
+ FROM Users AS U WITH(NOLOCK)
+ LEFT JOIN Office AS O ON O.OfficeId = U.OfficeId
+ LEFT JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
+ LEFT JOIN OttoBoxOrderDetails AS OOD ON OOD.OfficeId = O.OfficeId
+ WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN OOD.OttoOrderCreationDate
+	between @fromdate and @todate THEN 1 ELSE 0 END END
+	ORDER BY U.DateCreated ASC
 END
