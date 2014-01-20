@@ -1,0 +1,16 @@
+﻿BEGIN  
+ SELECT O.EFAN AS'EFAN',  O.Name AS'Account Name', AI.AddressLine1 AS 'Account Address', AI.City AS 'Account City', AI.State AS 'Account State', AI.ZipCode AS 'Account Zip', AC.Type,
+ CASE WHEN AC.Type = 1 THEN COALESCE(COUNT(AC.Fee), 0) ELSE 0 END  AS 'Number of Authorizations Submitted' , CASE WHEN AC.Type = 1 THEN COALESCE(SUM(AC.Fee), 0) ELSE 0 END AS 'Authorization Fees Paid',
+ CASE WHEN AC.Type = 2 THEN COALESCE(COUNT(AC.Fee), 0) ELSE 0 END  AS 'Number of Claims Submitted' , CASE WHEN AC.Type = 2 THEN COALESCE(SUM(AC.Fee), 0) ELSE 0 END AS 'Claim Fees Paid'
+FROM Office AS O
+INNER JOIN 
+ (
+ SELECT EFAN, Fee, 1 AS 'Type', TransactionDate FROM AuthorizationTransaction 
+ UNION ALL
+ SELECT EFAN, Fee, 2 AS 'Type', TransactionDate FROM ClaimTransaction
+ ) AS AC ON AC.EFAN = O.EFAN
+LEFT JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
+WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN (AC.TransactionDate
+ 	BETWEEN @fromdate AND @todate) THEN 1 ELSE 0 END END
+GROUP BY O.EFAN, O.Name, AI.AddressLine1, AI.City, AI.State, AI.ZipCode, AC.Type 
+ORDER BY O.EFAN
