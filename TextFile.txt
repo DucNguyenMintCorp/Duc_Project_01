@@ -8,9 +8,9 @@
 	WHILE @BaseFee = 0 AND @ParentOrganizationId <> -1
 	BEGIN
 		IF @VisionType LIKE 'Single%'
-			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 774 AND ComponentTypeId = 12 AND IsDisabled = 0
+			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 774 AND ComponentTypeId = 12
 		ELSE
-			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 976 AND ComponentTypeId = 12 AND IsDisabled = 0
+			SELECT @BaseFee = Price FROM ElementPriceAssociation WHERE OrganizationId = @ParentOrganizationId AND ComponentId = 976 AND ComponentTypeId = 12
 
 		IF @BaseFee = 0
 		BEGIN
@@ -36,10 +36,10 @@
 		ELSE EPA.Price - (CASE WHEN VLO.LensCode LIKE '%+%' THEN 
 										(SELECT TOP 1 ISNULL(EPATemp.Price, @BaseFee) FROM ElementPriceAssociation AS EPATemp 
 										WHERE (EPATemp.ComponentId =(SELECT VLOTemp.VSPLensOptionId FROM VSPLensOptions AS VLOTemp 
-																		WHERE (VLOTemp.OptionType = 'Progressives') AND (VLOTemp.LensCode = SUBSTRING(VLO.LensCode, 1, 2)))) AND (EPATemp.ComponentTypeId = 15) AND EPATemp.OrganizationId = @OrganizationId AND EPATemp.IsDisabled = 0) ELSE @BaseFee END) END AS 'Add-On Fees'
+																		WHERE (VLOTemp.OptionType = 'Progressives') AND (VLOTemp.LensCode = SUBSTRING(VLO.LensCode, 1, 2)))) AND (EPATemp.ComponentTypeId = 15) AND EPATemp.OrganizationId = @OrganizationId) ELSE @BaseFee END) END AS 'Add-On Fees'
 	FROM [VSPLensOptions] AS VLO
 	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId) AS EPA
 	 ON VLO.VSPLensOptionId=EPA.ComponentId 
 	WHERE (([VisionType] LIKE '%' + @VisionType + '%')  AND ([OptionType] LIKE @OptionType + '%') AND ([IsDeleted] != 1 ))
 
@@ -51,7 +51,7 @@
 	, CASE WHEN EPA.Price IS NULL THEN 0 ELSE EPA.Price - @BaseFee END AS 'Add-On Fees'
 	FROM [VSPLensOptions] AS VLO
 	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA
+	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=15 AND OrganizationId = @OrganizationId) AS EPA
 	 ON VLO.VSPLensOptionId=EPA.ComponentId 
 	WHERE (([VisionType] LIKE '%' + @VisionType + '%')  AND ([OptionType] LIKE @OptionType + '%') AND ([IsDeleted] != 1 ))
 
