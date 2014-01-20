@@ -1,34 +1,4 @@
 ﻿BEGIN
-	DECLARE @Enable bit  = 1
-	DECLARE @CurrentParent int = 0
-	DECLARE @Parent int = 0
-	DECLARE @SuperParent int = 0
+	INSERT INTO EyefinityLogTemp (Request,Response,DateCreated) VALUES (@Request,@Response,@DateAndTime)
 
-	SELECT @CurrentParent = ISNULL(parent_organization_id, -1) FROM organization where id = @OrganizationId
-
-	IF @CurrentParent <> -1
-	BEGIN
-		SELECT @Parent = ISNULL(parent_organization_id, -1) FROM organization where id = @CurrentParent
-
-		IF @Parent <> -1
-		BEGIN
-			SELECT @SuperParent = ISNULL(parent_organization_id, 0) FROM organization where id = @Parent
-		END
-		ELSE
-			SET @Parent = 0
-	END
-	ELSE
-		SET @CurrentParent = 0
-	
-	SELECT PCN.ProcedureCodeId, PCN.CPTCode, PCN.Description, PCN.Category , ISNULL(EPA.Price, ISNULL(EPA1.Price, ISNULL(EPA2.Price, ISNULL(EPA3.Price, '0')))) AS 'Fees'
-	, CAST(CASE WHEN EPA.Price IS NULL THEN 0 ELSE 1 END AS bit) AS 'Enable' 
-	FROM [ProcedureCodeNew] AS PCN
-	LEFT OUTER JOIN 
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @OrganizationId AND IsDisabled = 0) AS EPA ON PCN.ProcedureCodeId=EPA.ComponentId
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @CurrentParent AND IsDisabled = 0) AS EPA1 ON PCN.ProcedureCodeId=EPA1.ComponentId
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @Parent AND IsDisabled = 0) AS EPA2 ON PCN.ProcedureCodeId=EPA2.ComponentId
-	LEFT OUTER JOIN
-	 (SELECT * FROM ElementPriceAssociation WHERE ComponentTypeId=16 AND OrganizationId = @SuperParent AND IsDisabled = 0) AS EPA3 ON PCN.ProcedureCodeId=EPA3.ComponentId
 END
