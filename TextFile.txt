@@ -1,28 +1,24 @@
 ﻿BEGIN
-	DECLARE @ProviderId int
-	DECLARE @SessionId uniqueidentifier
-	
-	SELECT @ProviderId = ProviderId FROM Users WHERE UserId = @UserId
-	IF ((@ProviderId = 0) OR (@ProviderId IS NULL)) BEGIN
-		RETURN -50001 -- Record Not Found - Return negative so we know it's an error
-	END
-	
-	IF NOT EXISTS (SELECT UserId FROM MobileSession WHERE UserId=@UserId)
-	BEGIN
-		BEGIN TRANSACTION
-		INSERT INTO MobileSession (UserId, ProviderId) VALUES (@UserId, @ProviderId)
-		IF (@@ERROR <> 0) BEGIN
-			ROLLBACK
-			RETURN -@@ERROR -- Return as a negative -@@ERROR so we know there is an error
-		END
-		COMMIT -- SUCCESSFUL
-	END
-	
-	IF (EXISTS(SELECT SessionId FROM MobileSession WHERE UserId = @UserId)) BEGIN
-	    SELECT @ReturnSessionId = SessionId FROM MobileSession WHERE UserId = @UserId
-		RETURN 0 -- SUCCESS
-	END ELSE BEGIN
-		RETURN -50001 -- Record Not Found - Return negative so we know it's an error
-	END
-	--AND NPI=@npi
+	UPDATE [MemberInfo] SET
+			   [Memberfirstname]=@Memberfirstname
+			   ,[MemberlastName]=@MemberlastName
+			   ,[DOB]=@DOB
+			   ,[MemberAddress]=@MemberAddress
+			   ,[Memberaddress2]=@Memberaddress2
+			   ,[memberCity]=@memberCity
+			   ,[memberState]=@memberState
+			   ,[memberZIP]=@memberZIP
+			   ,[memberInsuranceplan]=@memberInsuranceplan
+			   ,[memberdeductable]=@memberdeductable
+			   ,[memberGender]=@memberGender
+			   ,[Email]=@Email
+			   ,[Phone]=@Phone
+			   ,[Fax]=@Fax
+			   ,[Employer]=@Employer
+			   ,[StatusId]=@StatusId
+			   ,[EffectiveDate]=@EffectiveDate
+			   ,[ExpiredDate]=@ExpiredDate
+			   ,[TerminationDate]=@TerminationDate
+			  
+		 WHERE MemberID = @MemberId
 END
