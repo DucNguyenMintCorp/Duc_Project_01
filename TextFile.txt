@@ -1,12 +1,2 @@
-﻿BEGIN  
- SELECT FD.State As 'Region/State', SUM(FD.OttoBoxPrice) As 'Sum of All Sales', SUM(FD.OttoBoxTotalPrice) As 'Sum of All Payment Received'
- , '' AS 'Sum of All Cancelled Annual Subscriptions', '' AS 'Total Payments Received Less Cancellations' 
- FROM (SELECT AI.State, OB.OttoBoxPrice, OB.OttoBoxTotalPrice
- FROM OttoBoxOrderDetails AS OB
- INNER JOIN Office AS O ON O.OfficeId = OB.OfficeId
- INNER JOIN AddressInfo AS AI ON AI.AddressId = O.AddressId
- WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN OB.OttoOrderCreationDate
-	between @fromdate and @todate THEN 1 ELSE 0 END END) AS FD
-GROUP BY FD.State
-ORDER BY FD.State
-END
+﻿SELECT * FROM EyefinityLog WHERE LogId  = @LogId
+	RETURN
