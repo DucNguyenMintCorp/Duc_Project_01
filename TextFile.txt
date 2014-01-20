@@ -1,4 +1,28 @@
 ﻿BEGIN
-	INSERT INTO EyefinityLogTemp (Request,Response,DateCreated) VALUES (@Request,@Response,@DateAndTime)
-
+	DECLARE @ProviderId int
+	DECLARE @SessionId uniqueidentifier
+	
+	SELECT @ProviderId = ProviderId FROM Users WHERE UserId = @UserId
+	IF ((@ProviderId = 0) OR (@ProviderId IS NULL)) BEGIN
+		RETURN -50001 -- Record Not Found - Return negative so we know it's an error
+	END
+	
+	IF NOT EXISTS (SELECT UserId FROM MobileSession WHERE UserId=@UserId)
+	BEGIN
+		BEGIN TRANSACTION
+		INSERT INTO MobileSession (UserId, ProviderId) VALUES (@UserId, @ProviderId)
+		IF (@@ERROR <> 0) BEGIN
+			ROLLBACK
+			RETURN -@@ERROR -- Return as a negative -@@ERROR so we know there is an error
+		END
+		COMMIT -- SUCCESSFUL
+	END
+	
+	IF (EXISTS(SELECT SessionId FROM MobileSession WHERE UserId = @UserId)) BEGIN
+	    SELECT @ReturnSessionId = SessionId FROM MobileSession WHERE UserId = @UserId
+		RETURN 0 -- SUCCESS
+	END ELSE BEGIN
+		RETURN -50001 -- Record Not Found - Return negative so we know it's an error
+	END
+	--AND NPI=@npi
 END
