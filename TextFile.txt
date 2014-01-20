@@ -1,6 +1,18 @@
-﻿BEGIN
-	SELECT *
-	  FROM [dbo].[Product]
-	  WHERE 1 = CASE WHEN @ProductId =0 THEN 1 ELSE CASE WHEN ProductId =@ProductId THEN 1 ELSE 0 END END
-	  ORDER BY SortId DESC
+﻿BEGIN  
+ SELECT PC.ID as 'ID',
+ PC.FirstName as 'First Name',
+ PC.LastName as 'Last Name',
+ PC.Email as 'Email',
+ PC.PracticeName as 'Practice Name',
+ PC.PrimaryRole as 'Primary Role',
+ PC.PracticePhone as 'Practice Phone',
+ PC.StreetAddress as 'Street Address',
+ PC.City as 'City',
+ PC.[State] as 'State',
+ PC.PostalCode as 'Zip Code',
+ PC.DateAdded as 'Date Added' 
+ FROM ProspectiveCustomers AS PC WITH(NOLOCK)
+ WHERE 1 = CASE WHEN @fromdate ='' THEN 1 ELSE CASE WHEN DateAdded
+	between @fromdate and @todate THEN 1 ELSE 0 END END
+	ORDER BY DateAdded ASC
 END
