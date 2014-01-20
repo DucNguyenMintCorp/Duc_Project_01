@@ -1,9 +1,5 @@
 ﻿BEGIN
-	SELECT [ProductId]
-		  ,[Name]
-		  ,[SortId]
-		  ,[Page]
-		  ,[IsEnabled]
+	SELECT *
 	  FROM [dbo].[Product]
 	  WHERE 1 = CASE WHEN @ProductId =0 THEN 1 ELSE CASE WHEN ProductId =@ProductId THEN 1 ELSE 0 END END
 	  ORDER BY SortId DESC
