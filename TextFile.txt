@@ -1,24 +1,3 @@
-﻿BEGIN
-	UPDATE [dev.smarteyewear.net].[dbo].[MemberInfo] SET
-			   [Memberfirstname]=@Memberfirstname
-			   ,[MemberlastName]=@MemberlastName
-			   ,[DOB]=@DOB
-			   ,[MemberAddress]=@MemberAddress
-			   ,[Memberaddress2]=@Memberaddress2
-			   ,[memberCity]=@memberCity
-			   ,[memberState]=@memberState
-			   ,[memberZIP]=@memberZIP
-			   ,[memberInsuranceplan]=@memberInsuranceplan
-			   ,[memberdeductable]=@memberdeductable
-			   ,[memberGender]=@memberGender
-			   ,[Email]=@Email
-			   ,[Phone]=@Phone
-			   ,[Fax]=@Fax
-			   ,[Employer]=@Employer
-			   ,[StatusId]=@StatusId
-			   ,[EffectiveDate]=@EffectiveDate
-			   ,[ExpiredDate]=@ExpiredDate
-			   ,[TerminationDate]=@TerminationDate
-			  
-		 WHERE MemberID = @MemberId
-END
+﻿UPDATE dbo.[Users] SET Password=HASHBYTES('MD5', @Password) WHERE Username=@Username 
+
+SELECT 1
